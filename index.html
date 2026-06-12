@@ -2,67 +2,78 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سكربتات الدراك</title>
     <style>
-        body { background: #000; margin: 0; overflow: hidden; color: white; font-family: sans-serif; }
+        body { background: #000; margin: 0; overflow-x: hidden; color: white; font-family: sans-serif; }
         canvas { position: fixed; top:0; left:0; z-index: -1; }
-        .card { background: rgba(10, 10, 20, 0.8); border: 2px solid #7c5cff; border-radius: 20px; padding: 30px; width: 350px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-        button { background: linear-gradient(90deg, #7c5cff, #5bdbff); border: none; padding: 12px; color: white; border-radius: 10px; cursor: pointer; width: 100%; margin: 5px 0; font-weight: bold; }
-        #results { margin-top: 15px; border-top: 1px solid #444; padding-top: 10px; max-height: 200px; overflow-y: auto; }
+        .container { width: 90%; max-width: 500px; margin: auto; padding-top: 50px; }
+        .card { background: rgba(20, 20, 40, 0.9); border: 2px solid #7c5cff; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .info { flex-grow: 1; }
+        button { background: #28a745; border: none; padding: 10px 15px; color: white; border-radius: 8px; cursor: pointer; }
+        .menu-btn { cursor: pointer; font-size: 24px; color: #fff; padding: 0 10px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        h1 { text-align: center; color: #7c5cff; }
+        audio { width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body>
     <canvas id="stars"></canvas>
-
-    <div id="mainMenu" class="card">
+    
+    <div class="container">
         <h1>سكربتات الدراك</h1>
-        <button onclick="showSection('search')">بحث عن سكربتات</button>
-    </div>
+        
+        <!-- إضافة سكربت -->
+        <input id="sName" placeholder="اسم السكربت">
+        <input id="mName" placeholder="اسم الماب">
+        <button onclick="addScript()" style="width:100%; background:#7c5cff; margin-top:10px; font-weight:bold;">نشر السكربت</button>
+        
+        <div id="scriptList" style="margin-top:20px;"></div>
 
-    <div id="searchSection" class="card" style="display:none;">
-        <span onclick="showSection('main')" style="float:left; cursor:pointer; color:red;">X</span>
-        <h2>قائمة السكربتات</h2>
-        <input id="searchBox" placeholder="بحث باسم السكربت..." onkeyup="renderScripts()" style="width:90%; padding:5px;">
-        <div id="results"></div>
-        <button style="font-size:20px;" onclick="showAddModal()">+</button>
+        <!-- مشغل الصوت -->
+        <audio controls>
+            <source src="quran.mp3" type="audio/mpeg">
+            متصفحك لا يدعم مشغل الصوت.
+        </audio>
     </div>
 
     <script>
-        // تأثير النجوم
+        // النجوم (أسرع وأكثر)
         const canvas = document.getElementById('stars');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        let stars = Array.from({length: 150}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5}));
+        let stars = Array.from({length: 500}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*2, s: Math.random()*2 + 1}));
         function draw() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
             ctx.fillStyle = "white";
-            stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.y += 0.1; if(s.y > canvas.height) s.y = 0; });
+            stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.y += s.s; if(s.y > canvas.height) s.y = 0; });
             requestAnimationFrame(draw);
         }
         draw();
 
-        // منطق السكربتات
-        let scriptDatabase = JSON.parse(localStorage.getItem('myScripts') || '[]');
-        function showSection(type) {
-            document.getElementById('mainMenu').style.display = type === 'main' ? 'block' : 'none';
-            document.getElementById('searchSection').style.display = type === 'search' ? 'block' : 'none';
+        // نظام السكربتات
+        let db = JSON.parse(localStorage.getItem('myScripts') || '[]');
+        function addScript() {
+            let n = document.getElementById('sName').value;
+            let m = document.getElementById('mName').value;
+            if(!n || !m) return alert("يرجى تعبئة كافة البيانات");
+            db.push({n, m});
+            localStorage.setItem('myScripts', JSON.stringify(db));
+            render();
         }
-        function showAddModal() {
-            let name = prompt("اسم السكربت:");
-            let map = prompt("اسم الماب:");
-            if (!name || !map) return;
-            scriptDatabase.push({ name, map });
-            localStorage.setItem('myScripts', JSON.stringify(scriptDatabase));
-            renderScripts();
-        }
-        function renderScripts() {
-            let container = document.getElementById('results');
-            container.innerHTML = "";
-            scriptDatabase.forEach(s => {
-                container.innerHTML += `<div style="border-bottom:1px solid #333; padding:5px;"><b>${s.name}</b> (${s.map})</div>`;
+        function render() {
+            let list = document.getElementById('scriptList');
+            list.innerHTML = "";
+            db.forEach((s, i) => {
+                list.innerHTML += `<div class="card">
+                    <div class="info"><b>السكربت: ${s.n}</b><br><small>الماب: ${s.m}</small></div>
+                    <button onclick="alert('جاري التشغيل...')">تشغيل</button>
+                    <span class="menu-btn" onclick="deleteScript(${i})">≡</span>
+                </div>`;
             });
         }
+        function deleteScript(i) { if(confirm('هل تريد حذف السكربت؟')) { db.splice(i, 1); localStorage.setItem('myScripts', JSON.stringify(db)); render(); } }
+        render();
     </script>
 </body>
 </html>
-
