@@ -2,78 +2,88 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سكربتات الدراك</title>
+    <title>MRX-PROTECT</title>
     <style>
-        body { background: #000; margin: 0; overflow-x: hidden; color: white; font-family: sans-serif; }
-        canvas { position: fixed; top:0; left:0; z-index: -1; }
-        .container { width: 90%; max-width: 500px; margin: auto; padding-top: 50px; }
-        .card { background: rgba(20, 20, 40, 0.9); border: 2px solid #7c5cff; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .info { flex-grow: 1; }
-        button { background: #28a745; border: none; padding: 10px 15px; color: white; border-radius: 8px; cursor: pointer; }
-        .menu-btn { cursor: pointer; font-size: 24px; color: #fff; padding: 0 10px; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        h1 { text-align: center; color: #7c5cff; }
-        audio { width: 100%; margin-top: 20px; }
+        body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; font-family: sans-serif; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 0; }
+        .glass-box { position: relative; z-index: 1; width: 90%; max-width: 500px; padding: 30px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px; text-align: center; }
+        input, textarea { width: 100%; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 15px; padding: 15px; box-sizing: border-box; margin: 10px 0; outline: none; font-size: 16px; }
+        button { width: 100%; padding: 15px; background: linear-gradient(135deg, #7c5cff, #5c3ce0); border: none; border-radius: 15px; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        #copyBtn { display: none; background: #28a745; }
+        #footer { margin-top: 15px; font-size: 12px; color: #fff; opacity: 0.6; }
+        h2 { color: #fff; }
     </style>
 </head>
 <body>
     <canvas id="stars"></canvas>
-    
-    <div class="container">
-        <h1>سكربتات الدراك</h1>
-        
-        <!-- إضافة سكربت -->
-        <input id="sName" placeholder="اسم السكربت">
-        <input id="mName" placeholder="اسم الماب">
-        <button onclick="addScript()" style="width:100%; background:#7c5cff; margin-top:10px; font-weight:bold;">نشر السكربت</button>
-        
-        <div id="scriptList" style="margin-top:20px;"></div>
 
-        <!-- مشغل الصوت -->
-        <audio controls>
-            <source src="quran.mp3" type="audio/mpeg">
-            متصفحك لا يدعم مشغل الصوت.
-        </audio>
+    <div class="glass-box" id="loginBox">
+        <h2>دخول المنصة</h2>
+        <input type="text" id="pass" placeholder="كلمة المرور">
+        <button onclick="login()">تشغيل</button>
+    </div>
+
+    <div class="glass-box" id="mainBox" style="display:none;">
+        <h2>مشفر سكربتات الدراك</h2>
+        <textarea id="in" placeholder="ضع كود الـ Lua هنا..."></textarea>
+        <button onclick="encrypt()">تشفير قوي ⭐️</button>
+        <button id="copyBtn" onclick="copyText()">نسخ ⭐️</button>
+        <textarea id="out" readonly placeholder="النتيجة المشفرة..."></textarea>
+        <div id="footer">حقوق الدراك - 2026</div>
     </div>
 
     <script>
-        // النجوم (أسرع وأكثر)
         const canvas = document.getElementById('stars');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        let stars = Array.from({length: 500}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*2, s: Math.random()*2 + 1}));
+        let stars = Array.from({length: 100}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5, s: Math.random()*0.5}));
         function draw() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = "white";
+            ctx.fillStyle = "#fff";
             stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.y += s.s; if(s.y > canvas.height) s.y = 0; });
             requestAnimationFrame(draw);
-        }
-        draw();
+        } draw();
 
-        // نظام السكربتات
-        let db = JSON.parse(localStorage.getItem('myScripts') || '[]');
-        function addScript() {
-            let n = document.getElementById('sName').value;
-            let m = document.getElementById('mName').value;
-            if(!n || !m) return alert("يرجى تعبئة كافة البيانات");
-            db.push({n, m});
-            localStorage.setItem('myScripts', JSON.stringify(db));
-            render();
+        function login() {
+            if(document.getElementById('pass').value === "MRX.com") {
+                document.getElementById('loginBox').style.display = "none";
+                document.getElementById('mainBox').style.display = "block";
+            } else { alert("كلمة المرور غير صحيحة!"); }
         }
-        function render() {
-            let list = document.getElementById('scriptList');
-            list.innerHTML = "";
-            db.forEach((s, i) => {
-                list.innerHTML += `<div class="card">
-                    <div class="info"><b>السكربت: ${s.n}</b><br><small>الماب: ${s.m}</small></div>
-                    <button onclick="alert('جاري التشغيل...')">تشغيل</button>
-                    <span class="menu-btn" onclick="deleteScript(${i})">≡</span>
-                </div>`;
-            });
+
+        function encrypt() {
+            let code = document.getElementById('in').value;
+            if(!code) return;
+            let b64 = btoa(unescape(encodeURIComponent(code)));
+            let chunks = b64.match(/.{1,50}/g) || [];
+            let lua = "-- [MRX][حقوق مملكه الدراك و ماجد]\n";
+            lua += "local data = {\n";
+            chunks.forEach(c => lua += '    "' + c.replace(/"/g, '\\"') + '",\n');
+            lua += "}\n\n";
+            lua += "local full = table.concat(data, \"\")\n";
+            lua += "local function b64_decode(data)\n";
+            lua += "    local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'\n";
+            lua += "    data = string.gsub(data, '[^'..b..'=]', '')\n";
+            lua += "    return (data:gsub('.', function(x)\n";
+            lua += "        if (x == '=') then return '' end\n";
+            lua += "        local r,f='',(b:find(x)-1)\n";
+            lua += "        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end\n";
+            lua += "        return r;\n";
+            lua += "    end):gsub('%d%d%d%d%d%d%d%d', function(x)\n";
+            lua += "        return string.char(tonumber(x, 2))\n";
+            lua += "    end))\n";
+            lua += "end\n\n";
+            lua += "loadstring(b64_decode(full))()";
+            
+            document.getElementById('out').value = lua;
+            document.getElementById('copyBtn').style.display = "block";
         }
-        function deleteScript(i) { if(confirm('هل تريد حذف السكربت؟')) { db.splice(i, 1); localStorage.setItem('myScripts', JSON.stringify(db)); render(); } }
-        render();
+
+        function copyText() {
+            let area = document.getElementById('out');
+            area.select();
+            document.execCommand('copy');
+        }
     </script>
 </body>
 </html>
